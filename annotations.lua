@@ -172,18 +172,29 @@ function M.get_deleted_annotations(local_map, last_uploaded_map, document, force
             return
         end
 
+        local l = 1
         for _, uploaded_k in ipairs(uploaded_keys) do
             local uploaded_v = last_uploaded_map[uploaded_k]
             local local_and_uploaded = false
-            for _, local_k in ipairs(local_keys) do
-                local local_v = local_map[local_k]
+            while l <= #local_keys do
+                local local_v = local_map[local_keys[l]]
                 if M.positions_intersect(uploaded_v, local_v, document) then
                     local_and_uploaded = true
                     break
                 end
-                if M.compare_positions(local_v.page, uploaded_v.page, document) > 0 then
+                -- Only permanently skip local_v when it's STRICTLY before
+                -- uploaded_v (compare < 0). A tie (0) is ambiguous: it may mean
+                -- "same position", but compare_positions also collapses an
+                -- unresolvable/invalid XPointer comparison (nil from
+                -- document:compareXPointers, e.g. a stale annotation position)
+                -- into 0. Treating that as "safe to discard" could silently
+                -- mark a still-present annotation as deleted, so ties fall
+                -- through to break instead, keeping local_v available for
+                -- re-examination against the next uploaded entry.
+                if M.compare_positions(local_v.page, uploaded_v.page, document) >= 0 then
                     break
                 end
+                l = l + 1
             end
             if not local_and_uploaded then
                 uploaded_v.deleted = true
