@@ -46,6 +46,7 @@ AnnotationSyncPlugin.default_settings = {
     device_name = "",
     selected_settings = {},
     progress_sync_excluded_dirs = {},
+    menu_location = "tools",
 }
 
 function AnnotationSyncPlugin:init()
@@ -85,6 +86,9 @@ function AnnotationSyncPlugin:init()
         self.settings.progress_sync_interval = self.default_settings.progress_sync_interval
     end
     self.settings.progress_sync_excluded_dirs = self.settings.progress_sync_excluded_dirs or {}
+    if self.settings.menu_location == nil then
+        self.settings.menu_location = self.default_settings.menu_location
+    end
 
     self.manager = SyncManager:new(self)
 
@@ -135,7 +139,7 @@ end
 function AnnotationSyncPlugin:addToMainMenu(menu_items)
     menu_items.annotation_sync_plugin = {
         text = _("Annotation Sync"),
-        sorting_hint = "tools",
+        sorting_hint = self.settings.menu_location ~= "none" and self.settings.menu_location or nil,
         sub_item_table = {
             {
                 text = _("Settings"),
