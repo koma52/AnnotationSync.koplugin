@@ -175,6 +175,41 @@ function AnnotationSyncPlugin:addToMainMenu(menu_items)
                         end
                     },
                     {
+                        text = _("Menu location"),
+                        sub_item_table = {
+                            {
+                                text = _("Tools"),
+                                checked_func = function()
+                                    return self.settings.menu_location == "tools"
+                                end,
+                                callback = function()
+                                    self.settings.menu_location = "tools"
+                                    self:saveSettings()
+                                end,
+                            },
+                            {
+                                text = _("More tools"),
+                                checked_func = function()
+                                    return self.settings.menu_location == "more_tools"
+                                end,
+                                callback = function()
+                                    self.settings.menu_location = "more_tools"
+                                    self:saveSettings()
+                                end,
+                            },
+                            {
+                                text = _("None (shown as new item)"),
+                                checked_func = function()
+                                    return self.settings.menu_location == "none"
+                                end,
+                                callback = function()
+                                    self.settings.menu_location = "none"
+                                    self:saveSettings()
+                                end,
+                            },
+                        },
+                    },
+                    {
                         text = _("Automatically Sync All when network becomes available"),
                         checked_func = function()
                             return self.settings.network_auto_sync

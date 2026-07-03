@@ -67,4 +67,60 @@ describe("AnnotationSync menu location setting", function()
         assert.is_equal("tools", sync_instance2.settings.menu_location)
         readerui2:onClose()
     end)
+
+    local function find_settings_submenu(sync_instance)
+        local menu_items = {}
+        sync_instance:addToMainMenu(menu_items)
+        return menu_items.annotation_sync_plugin.sub_item_table[1]
+    end
+
+    local function find_menu_location_submenu(sync_instance)
+        local settings_menu = find_settings_submenu(sync_instance)
+        for _, item in ipairs(settings_menu.sub_item_table) do
+            if item.text == "Menu location" then
+                return item
+            end
+        end
+        return nil
+    end
+
+    it("exposes a 'Menu location' submenu with Tools / More tools / None options", function()
+        local submenu = find_menu_location_submenu(sync_instance)
+        assert.is_not_nil(submenu)
+        assert.is_not_nil(submenu.sub_item_table)
+        assert.is_equal(3, #submenu.sub_item_table)
+        assert.is_equal("Tools", submenu.sub_item_table[1].text)
+        assert.is_equal("More tools", submenu.sub_item_table[2].text)
+        assert.is_equal("None (shown as new item)", submenu.sub_item_table[3].text)
+    end)
+
+    it("checks the option matching the current menu_location", function()
+        sync_instance.settings.menu_location = "more_tools"
+        local submenu = find_menu_location_submenu(sync_instance)
+        assert.is_false(submenu.sub_item_table[1].checked_func())
+        assert.is_true(submenu.sub_item_table[2].checked_func())
+        assert.is_false(submenu.sub_item_table[3].checked_func())
+    end)
+
+    it("selecting 'More tools' updates and persists the setting", function()
+        local submenu = find_menu_location_submenu(sync_instance)
+        submenu.sub_item_table[2].callback()
+        assert.is_equal("more_tools", sync_instance.settings.menu_location)
+
+        local readerui2, sync_instance2 = test_utils.init_integration_context(
+            "spec/front/unit/data/juliet.epub", AnnotationSyncPlugin
+        )
+        assert.is_equal("more_tools", sync_instance2.settings.menu_location)
+        readerui2:onClose()
+    end)
+
+    it("selecting 'None' updates the setting and removes sorting_hint", function()
+        local submenu = find_menu_location_submenu(sync_instance)
+        submenu.sub_item_table[3].callback()
+        assert.is_equal("none", sync_instance.settings.menu_location)
+
+        local menu_items = {}
+        sync_instance:addToMainMenu(menu_items)
+        assert.is_nil(menu_items.annotation_sync_plugin.sorting_hint)
+    end)
 end)
