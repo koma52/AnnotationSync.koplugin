@@ -130,6 +130,61 @@ describe("AnnotationSync Sync Protection & Regressions", function()
         assert.is_nil(local_map["p1|p2"])
     end)
 
+    it("keeps a wide local annotation available across multiple matching uploaded entries (Issue 69 pointer regression)", function()
+        -- Regression guard for the O(n^2) fix in get_deleted_annotations: a single
+        -- wide-ranging local annotation spans two uploaded annotations. The
+        -- persistent scan pointer must NOT be advanced past it after the first
+        -- match, or the second uploaded annotation would be wrongly marked deleted.
+        local annotations_mod = require("annotations")
+        local local_map = {
+            ["005||005"] = { pos0 = "005", pos1 = "005", page = "005", text = "early, non-overlapping" },
+            ["010||050"] = { pos0 = "010", pos1 = "050", page = "010", text = "wide, overlaps both uploaded entries" },
+        }
+        local last_sync_map = {
+            ["020||020"] = { pos0 = "020", pos1 = "020", page = "020", text = "u1, inside the wide range" },
+            ["040||040"] = { pos0 = "040", pos1 = "040", page = "040", text = "u2, also inside the wide range" },
+        }
+        local mock_doc = {
+            compareXPointers = function(self, a, b)
+                if a == b then return 0 end
+                return a < b and 1 or -1
+            end
+        }
+
+        annotations_mod.get_deleted_annotations(local_map, last_sync_map, mock_doc)
+
+        assert.falsy(last_sync_map["020||020"].deleted, "u1 should still be matched by the wide local annotation")
+        assert.falsy(last_sync_map["040||040"].deleted, "u2 should still be matched by the wide local annotation")
+    end)
+
+    it("does not skip a still-relevant later local annotation when an earlier one is discarded (Issue 69 pointer regression)", function()
+        -- Regression guard: local[1] is discarded (ends before u1 starts), advancing
+        -- the persistent pointer to local[2]. local[2] does not intersect u1 either
+        -- (so u1 is correctly marked deleted), but it MUST remain available and
+        -- correctly match u2 afterwards -- proving the pointer isn't consumed by a
+        -- non-matching comparison.
+        local annotations_mod = require("annotations")
+        local local_map = {
+            ["005||005"] = { pos0 = "005", pos1 = "005", page = "005", text = "ends before u1" },
+            ["030||045"] = { pos0 = "030", pos1 = "045", page = "030", text = "starts after u1, overlaps u2" },
+        }
+        local last_sync_map = {
+            ["020||020"] = { pos0 = "020", pos1 = "020", page = "020", text = "u1, unmatched by any local annotation" },
+            ["040||040"] = { pos0 = "040", pos1 = "040", page = "040", text = "u2, matched by local[030||045]" },
+        }
+        local mock_doc = {
+            compareXPointers = function(self, a, b)
+                if a == b then return 0 end
+                return a < b and 1 or -1
+            end
+        }
+
+        annotations_mod.get_deleted_annotations(local_map, last_sync_map, mock_doc)
+
+        assert.is_true(local_map["020||020"].deleted, "u1 should be marked deleted (no local annotation overlaps it)")
+        assert.falsy(last_sync_map["040||040"].deleted, "u2 should still be matched by local[030||045]")
+    end)
+
     it("should allow deletions if local map is empty but 'force' is true (Manual Override)", function()
         local annotations_mod = require("annotations")
         local local_map = {} -- EMPTY

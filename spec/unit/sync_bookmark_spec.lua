@@ -120,12 +120,15 @@ describe("AnnotationSync Bookmark Synchronization", function()
     end)
 
     it("synchronizes bookmark deletions (with safety check bypassed)", function()
-        -- 1. Create two bookmarks using XPointers and sync them
-        local key1 = "BOOKMARK|/page1"
-        local bm1 = { page = "/page1", text = "Bookmark 1", datetime = "2026-02-01 10:00:00" }
-        
-        local key2 = "BOOKMARK|/page2"
-        local bm2 = { page = "/page2", text = "Bookmark 2", datetime = "2026-02-01 10:00:00" }
+        -- 1. Create two bookmarks using real XPointers (resolvable by the real
+        -- document's compareXPointers, unlike synthetic strings) and sync them
+        local page1 = readerui.document:getPageXPointer(5)
+        local key1 = "BOOKMARK|" .. page1
+        local bm1 = { page = page1, text = "Bookmark 1", datetime = "2026-02-01 10:00:00" }
+
+        local page2 = readerui.document:getPageXPointer(10)
+        local key2 = "BOOKMARK|" .. page2
+        local bm2 = { page = page2, text = "Bookmark 2", datetime = "2026-02-01 10:00:00" }
         
         -- Start with both in UI
         readerui.annotation.annotations = { bm1, bm2 }
