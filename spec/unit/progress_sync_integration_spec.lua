@@ -159,16 +159,17 @@ describe("Reading Progress Sync Integration", function()
         readerui.document.page = 6
         sync_instance:onPageUpdate()
         fastforward_ui_events() -- Trigger scheduled sync
+        fastforward_ui_events() -- Trigger nested sync schedule
 
         local hash = util.partialMD5(readerui.document.file)
         local sdr_dir = require("docsettings"):getSidecarDir(readerui.document.file)
         local json_path = sdr_dir .. "/" .. hash .. ".progress.json"
-        
+
         local f = io.open(json_path, "r")
         assert.is_not_nil(f)
         local content = f:read("*all")
         f:close()
-        
+
         local data = json.decode(content)
         assert.is_not_nil(data["TestDevice"])
         assert.is_equal(6, data["TestDevice"].page)
@@ -194,15 +195,16 @@ describe("Reading Progress Sync Integration", function()
         readerui.document.page = 11
         sync_instance:onPageUpdate()
         fastforward_ui_events()
+        fastforward_ui_events() -- Trigger nested sync schedule
 
         local hash = util.partialMD5(readerui.document.file)
         local sdr_dir = require("docsettings"):getSidecarDir(readerui.document.file)
         local json_path = sdr_dir .. "/" .. hash .. ".progress.json"
-        
+
         local f = io.open(json_path, "r")
         local content = f:read("*all")
         f:close()
-        
+
         local data = json.decode(content)
         -- Should be 0.75, not 11/100 = 0.11
         assert.is_equal(0.75, data["TestDevice"].percentage)
@@ -333,16 +335,17 @@ describe("Reading Progress Sync Integration", function()
         readerui.document.page = 6
         sync_instance:onPageUpdate()
         fastforward_ui_events() -- Trigger scheduled sync
+        fastforward_ui_events() -- Trigger nested sync schedule
 
         local hash = util.partialMD5(readerui.document.file)
         local sdr_dir = require("docsettings"):getSidecarDir(readerui.document.file)
         local json_path = sdr_dir .. "/" .. hash .. ".progress.json"
-        
+
         local f = io.open(json_path, "r")
         assert.is_not_nil(f)
         local content = f:read("*all")
         f:close()
-        
+
         local data = json.decode(content)
         assert.is_not_nil(data["TestDevice"])
         assert.is_equal("mock-pos-123", data["TestDevice"].pos)
@@ -562,15 +565,16 @@ describe("Reading Progress Sync Integration", function()
         readerui.document.page = 21
         sync_instance:onPageUpdate()
         fastforward_ui_events()
+        fastforward_ui_events() -- Trigger nested sync schedule
 
         local hash = util.partialMD5(readerui.document.file)
         local sdr_dir = require("docsettings"):getSidecarDir(readerui.document.file)
         local json_path = sdr_dir .. "/" .. hash .. ".progress.json"
-        
+
         local f = io.open(json_path, "r")
         local content = f:read("*all")
         f:close()
-        
+
         local data = json.decode(content)
         assert.is_equal(0.88, data["TestDevice"].percentage)
         assert.is_equal("rolling-pos-789", data["TestDevice"].pos)
@@ -624,6 +628,7 @@ describe("Reading Progress Sync Integration", function()
         readerui.document.page = 6
         sync_instance:onPageUpdate()
         fastforward_ui_events()
+        fastforward_ui_events() -- Trigger nested sync schedule
 
         local hash = util.partialMD5(readerui.document.file)
         local sdr_dir = require("docsettings"):getSidecarDir(readerui.document.file)
@@ -683,6 +688,7 @@ describe("Reading Progress Sync Integration", function()
         readerui.document.page = 6
         sync_instance:onPageUpdate()
         fastforward_ui_events()
+        fastforward_ui_events() -- Trigger nested sync schedule
 
         local hash = util.partialMD5(readerui.document.file)
         local sdr_dir = require("docsettings"):getSidecarDir(readerui.document.file)
@@ -939,6 +945,7 @@ describe("Reading Progress Sync Integration", function()
         readerui.document.page = 6
         sync_instance:onPageUpdate()
         fastforward_ui_events() -- Trigger scheduled sync
+        fastforward_ui_events() -- Trigger nested sync schedule
 
         local f = io.open(json_path, "r")
         assert.is_not_nil(f)
